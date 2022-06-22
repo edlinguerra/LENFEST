@@ -42,7 +42,9 @@ factores <- function(dat){
   colnames(temp2) <- variables$`SAMPLE CODE`
   temp3 <- cbind(temp2,sample_code) %>% 
            as.data.frame() %>% 
-           mutate(YEAR_SITE = str_c(YEAR, `SITE NAME`, sep = "_"))
+           mutate(YEAR_SITE = str_c(YEAR, `SITE NAME`, sep = "_"),
+                  YEAR_LOCATION = str_c(YEAR, LOCATION, sep = "_"),
+                  YEAR_REGION = str_c(YEAR, REGION, sep = "_"))
   return(temp3)
 }
 indicadores <- function(dat){
