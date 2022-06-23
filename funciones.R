@@ -3,6 +3,7 @@ library(tidyverse)
 library(stringr)
 
 # Función para leer datos en formato PRIMER para trabajar con vegan
+
 datos <- function(dat){
   total <- which(str_detect(dat$`SAMPLE CODE`, "total", negate = FALSE))
   col <- which(str_detect(dat$`SAMPLE CODE`, "# col.", negate = FALSE))
