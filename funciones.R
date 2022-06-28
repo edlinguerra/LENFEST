@@ -2,6 +2,7 @@ library(readxl)
 library(tidyverse)
 library(stringr)
 
+
 # Función para leer datos en formato PRIMER para trabajar con vegan
 
 datos <- function(dat){
@@ -37,16 +38,18 @@ factores <- function(dat){
     colnames()
   variables <- temp1[c(nr:nrow(temp1)),1] %>% 
                 drop_na()
-  temp2 <- temp1[c(nr+1:nrow(temp1)),] %>% 
+  temp2 <- temp1 %>% #modificado para leer archivo SEAMAP
+    filter(`SAMPLE CODE` %in% variables$`SAMPLE CODE`) %>% 
     select(!c(1,nc:length(temp1))) %>% 
-    drop_na() %>% 
+    #drop_na() %>% #modificado para leer archivo SEAMAP
     t() 
   colnames(temp2) <- variables$`SAMPLE CODE`
+  
   temp3 <- cbind(temp2,sample_code) %>% 
-           as.data.frame() %>% 
-           mutate(YEAR_SITE = str_c(YEAR, `SITE NAME`, sep = "_"),
-                  YEAR_LOCATION = str_c(YEAR, LOCATION, sep = "_"),
-                  YEAR_REGION = str_c(YEAR, REGION, sep = "_"))
+    as.data.frame() %>% 
+    mutate(#YEAR_SITE = str_c(YEAR, `SITE NAME`, sep = "_"), #modificado para leer archivo SEAMAP
+      YEAR_LOCATION = str_c(YEAR, LOCATION, sep = "_"),
+      YEAR_REGION = str_c(YEAR, REGION, sep = "_"))
   return(temp3)
 }
 indicadores <- function(dat){
@@ -413,7 +416,7 @@ pco <- function(bio, fac, factor.esp = c("LOCATION", "REGION", "REGION-YEAR"),
         bind_cols(points) 
       pco_plot[[i]] <- ggplot(zz, aes(x= Axis.1, y = Axis.2))+
         geom_point(aes(colour = `SITE NAME`), size = 5)+
-        geom_text(aes(label = `YEAR`), nudge_y = 0.02)+
+        geom_text(aes(label = `YEAR`), nudge_y = 0.01)+
         geom_path(aes(group = `SITE NAME`), arrow = arrow(),)+
         theme_bw()+
         # theme(axis.ticks = element_blank(),
@@ -574,7 +577,7 @@ pco <- function(bio, fac, factor.esp = c("LOCATION", "REGION", "REGION-YEAR"),
       
       pco_plot[[i]] <- ggplot(zz, aes(x= Axis.1, y = Axis.2))+
         geom_point(colour = "blue", size = 5)+
-        geom_text(aes(label = `YEAR`), nudge_y = 0.02)+
+        geom_text(aes(label = `YEAR`), nudge_y = 0.0005)+
         geom_path(aes(group = REGION), arrow = arrow(),)+
         theme_bw()+
         ylab(lab.y)+
@@ -586,8 +589,6 @@ pco <- function(bio, fac, factor.esp = c("LOCATION", "REGION", "REGION-YEAR"),
     }
   }
 }
-
-
 
 shadeplot <- function(bio, fac, factor.esp = c("LOCATION", "REGION", "REGIO-YEAR"),
                       directorio = "MDS/carpetas.../",
@@ -736,6 +737,8 @@ shadeplot <- function(bio, fac, factor.esp = c("LOCATION", "REGION", "REGIO-YEAR
       filter(YEAR_LOCATION != zero_sample)
 
     # ID para factor.esp
+    s <- as.numeric(important.spp)
+    
     localities <- fac %>%
       group_by(REGION) %>%
       summarise(muestras = n())
@@ -849,6 +852,19 @@ shadeplot <- function(bio, fac, factor.esp = c("LOCATION", "REGION", "REGIO-YEAR
     bio <- bio %>%
       filter(YEAR_REGION != zero_sample)
     
+    # ID para factor.esp
+    s <- as.numeric(important.spp)
+    
+    localities <- fac %>%
+      group_by(REGION) %>%
+      summarise(muestras = n())
+    
+    loc <- localities %>%
+      filter(muestras >= 15) %>%
+      select(REGION)
+    
+    loc <- levels(factor(loc$REGION))
+    
     ### Generación de Shade Plot
     
     shade_plot <- list(NULL)
@@ -927,3 +943,79 @@ shadeplot <- function(bio, fac, factor.esp = c("LOCATION", "REGION", "REGIO-YEAR
     
     }
   }
+
+
+pco.env <- function(env,
+                    directorio = "PCO/pruebas/",
+                    r = 0.5){
+  
+  loc <- levels(factor(env$REGION))    
+  
+  ### Generación de PCO
+  
+  pco_plot <- list(NULL)
+  
+  for (i in 1:length(loc)){
+    # slección de datos por localidad
+    #sel <- which(fac$REGION == loc[i])
+    #xx <- env[sel,] 
+    
+    xx <- env %>% 
+      filter(REGION == loc[i]) %>% 
+      select(-c(ID, lat, lon)) %>% 
+      group_by(YEAR, REGION) %>% 
+      summarise(across(.fns = mean, na.rm = T))
+    
+    
+    #Pretratamiento y centroides
+    xx2 <- scale(as.matrix(xx[,3:length(xx)]))
+    euc <- vegdist(xx2, method = "euclidean")
+    pco <- pcoa(euc)
+    #mds <- metaMDS(dis_cen)
+    points <- as.data.frame(pco$vectors[,1:2])
+    
+    lab.x <- str_c("PCO 1 (", round(pco$values$Relative_eig[1] * 100,0), " %)")
+    lab.y <- str_c("PCO 2 (", round(pco$values$Relative_eig[2] * 100,0), " %)")
+    
+    zz <- xx %>% 
+      # group_by(YEAR,REGION) %>% 
+      # summarise(n = n()) %>% 
+      bind_cols(points) 
+    
+    # Estimación de vectores para biplot
+    correlaciones <- cor(as.matrix(zz[,3:length(zz)]))
+    vectores <- as_tibble(correlaciones) %>% 
+      mutate(variables = row.names(correlaciones)) %>% 
+      select(Axis.1:variables) %>% 
+      rename("delta_Axis.1" = "Axis.1",
+             "delta_Axis.2" = "Axis.2") %>% 
+      mutate("Axis.1" = 0, "Axis.2" = 0) %>% 
+      filter(variables != "Axis.1") %>% 
+      filter(variables != "Axis.2") %>% 
+      filter(delta_Axis.1 >= abs(r) | delta_Axis.2 >= abs(r))
+    
+    pco_plot[[i]] <- ggplot(zz, aes(x= Axis.1, y = Axis.2))+
+      geom_point(colour = "blue", size = 5)+
+      geom_text(aes(label = `YEAR`), nudge_y = 0.3)+
+      geom_vector(data = vectores,
+                  aes(x = Axis.1,
+                      y = Axis.2,
+                      dx = 5*delta_Axis.1,
+                      dy = 5*delta_Axis.2),
+                  skip = 1,
+                  pivot = 0,
+                  color = "red") +
+      geom_text(data = vectores,
+                aes(x = 2.5*delta_Axis.1,
+                    y = 2.5*delta_Axis.2,
+                    label = variables))+
+      geom_path(aes(group = REGION), arrow = arrow(),)+
+      theme_bw()+
+      ylab(lab.y)+
+      xlab(lab.x)
+    ggtitle(loc[i])
+    archivo <- paste(directorio,loc[i], ".pdf", sep = "_")
+    ggsave(archivo, pco_plot[[i]], width = 24, height = 16, units = "cm")
+    
+  }
+}
