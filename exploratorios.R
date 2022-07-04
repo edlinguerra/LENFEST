@@ -3,6 +3,7 @@ library(tidyverse)
 library(stringr)
 library(vegan)
 library(ape)
+library(metR)
 
 
 # TEMPORAL CHANGES OF SITES BY LOCATIONS ----------------------------------
@@ -236,9 +237,125 @@ shadeplot(bio = log(fish_biom+1),
           leyenda = "Fish biomass (log transformed)",
           important.spp = 50)
 
+
+
+
 # SEAMAP ------------------------------------------------------------------
 SEAMAP_PR2022 <- read_excel("datos_originales/SEAMAP_PR2022.xlsx")
 
+#Leer datos
 PR2022_dat <- datos(SEAMAP_PR2022)
-
 PR2022_fac <- factores(SEAMAP_PR2022)
+
+#variables para selecciones
+todas_spp <- colnames(PR2022_dat)
+todos_factores <- colnames(PR2022_fac)
+
+#Datos por arte de pesca
+HL <- PR2022_dat %>% 
+  bind_cols(PR2022_fac) %>% 
+  filter(GEAR == "HL")
+
+LL <- PR2022_dat %>% 
+  bind_cols(PR2022_fac) %>% 
+  filter(GEAR == "Longline")
+
+TRAP <- PR2022_dat %>% 
+  bind_cols(PR2022_fac) %>% 
+  filter(GEAR == "Trap")
+
+
+# Análisis para HL --------------------------------------------------------
+
+HL_dat <- HL %>% 
+  select(all_of(todas_spp))
+
+HL_fac <- HL %>% 
+  select(all_of((todos_factores)))
+
+mds(bio = HL_dat,
+    fac = HL_fac,
+    factor.esp = "REGION-YEAR",
+    directorio = "MDS/temporal_region/HL/",
+    tipo = "sqrt_MDS_CPUE_HL",
+    fuente = "SEAMAP")
+
+pco(bio = HL_dat,
+    fac = HL_fac,
+    factor.esp = "REGION-YEAR",
+    directorio = "MDS/temporal_region/HL/pco/",
+    tipo = "sqrt_PCO_CPUE_HL",
+    fuente = "SEAMAP")
+
+shadeplot(bio = HL_dat,
+          fac = HL_fac,
+          factor.esp = "REGION-YEAR",
+          directorio = "MDS/temporal_region/HL/shadeplot/",
+          tipo = "sqrt_shadeplot_CPUE_HL",
+          fuente = "SEAMAP",
+          leyenda = "CPUE average (sqrt)",
+          important.spp = 30)
+
+
+# Análisis para LL --------------------------------------------------------
+
+LL_dat <- LL %>% 
+  select(all_of(todas_spp))
+
+LL_fac <- LL %>% 
+  select(all_of((todos_factores)))
+
+mds(bio = LL_dat,
+    fac = LL_fac,
+    factor.esp = "REGION-YEAR",
+    directorio = "MDS/temporal_region/LL/",
+    tipo = "sqrt_MDS_CPUE_LL",
+    fuente = "SEAMAP")
+
+pco(bio = LL_dat,
+    fac = LL_fac,
+    factor.esp = "REGION-YEAR",
+    directorio = "MDS/temporal_region/LL/pco/",
+    tipo = "sqrt_PCO_CPUE_LL",
+    fuente = "SEAMAP")
+
+shadeplot(bio = LL_dat,
+          fac = LL_fac,
+          factor.esp = "REGION-YEAR",
+          directorio = "MDS/temporal_region/LL/shadeplot/",
+          tipo = "sqrt_shadeplot_CPUE_LL",
+          fuente = "SEAMAP",
+          leyenda = "CPUE average (sqrt)",
+          important.spp = 30)
+
+
+# Análisis para Trap ------------------------------------------------------
+
+TRAP_dat <- TRAP %>% 
+  select(all_of(todas_spp))
+
+TRAP_fac <- TRAP %>% 
+  select(all_of((todos_factores)))
+
+mds(bio = TRAP_dat,
+    fac = TRAP_fac,
+    factor.esp = "REGION-YEAR",
+    directorio = "MDS/temporal_region/TRAP/",
+    tipo = "sqrt_MDS_CPUE_TRAP",
+    fuente = "SEAMAP")
+
+pco(bio = TRAP_dat,
+    fac = TRAP_fac,
+    factor.esp = "REGION-YEAR",
+    directorio = "MDS/temporal_region/TRAP/pco/",
+    tipo = "sqrt_PCO_CPUE_TRAP",
+    fuente = "SEAMAP")
+
+shadeplot(bio = TRAP_dat,
+          fac = TRAP_fac,
+          factor.esp = "REGION-YEAR",
+          directorio = "MDS/temporal_region/TRAP/shadeplot/",
+          tipo = "sqrt_shadeplot_CPUE_TRAP",
+          fuente = "SEAMAP",
+          leyenda = "CPUE average (sqrt)",
+          important.spp = 30)
