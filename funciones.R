@@ -947,7 +947,11 @@ shadeplot <- function(bio, fac, factor.esp = c("LOCATION", "REGION", "REGIO-YEAR
 
 pco.env <- function(env,
                     directorio = "PCO/pruebas/",
-                    r = 0.5){
+                    r = 0.5,
+                    col = 0.85,
+                    vectores = TRUE){
+  
+  if(vectores == TRUE){
   
   loc <- levels(factor(env$REGION))    
   
@@ -956,9 +960,6 @@ pco.env <- function(env,
   pco_plot <- list(NULL)
   
   for (i in 1:length(loc)){
-    # slección de datos por localidad
-    #sel <- which(fac$REGION == loc[i])
-    #xx <- env[sel,] 
     
     xx <- env %>% 
       filter(REGION == loc[i]) %>% 
@@ -966,6 +967,16 @@ pco.env <- function(env,
       group_by(YEAR, REGION) %>% 
       summarise(across(.fns = mean, na.rm = T))
     
+    #Salvar archivo
+    write_excel_csv(
+      x = 
+        xx %>% 
+        mutate("-" = NA) %>% 
+        relocate(YEAR, .after = `-`) %>% 
+        relocate(REGION, .after = YEAR) ,
+      file = paste(directorio,"env_data",loc[i], ".csv", sep = "_"),
+      na = ""
+    )
     
     #Pretratamiento y centroides
     xx2 <- scale(as.matrix(xx[,3:length(xx)]))
@@ -984,15 +995,29 @@ pco.env <- function(env,
     
     # Estimación de vectores para biplot
     correlaciones <- cor(as.matrix(zz[,3:length(zz)]))
+    
+    # Remoción de variables colineales
+    dep <- rep(NA,length(xx)-3)
+    
+    for(k in 3:(length(xx)-1)){
+      if(cor(xx[,k], xx[,k+1]) >= col){
+          dep[k] <- colnames(xx[,k+1])        
+        }
+      }
+    
+    dep <- na.exclude(dep)
+    
     vectores <- as_tibble(correlaciones) %>% 
       mutate(variables = row.names(correlaciones)) %>% 
       select(Axis.1:variables) %>% 
+      filter(!variables %in% dep) %>% 
       rename("delta_Axis.1" = "Axis.1",
              "delta_Axis.2" = "Axis.2") %>% 
       mutate("Axis.1" = 0, "Axis.2" = 0) %>% 
       filter(variables != "Axis.1") %>% 
       filter(variables != "Axis.2") %>% 
-      filter(delta_Axis.1 >= abs(r) | delta_Axis.2 >= abs(r))
+      filter(delta_Axis.1 >= abs(r) | delta_Axis.2 >= abs(r)) 
+      
     
     pco_plot[[i]] <- ggplot(zz, aes(x= Axis.1, y = Axis.2))+
       geom_point(colour = "blue", size = 5)+
@@ -1006,16 +1031,73 @@ pco.env <- function(env,
                   pivot = 0,
                   color = "red") +
       geom_text(data = vectores,
-                aes(x = 2.5*delta_Axis.1,
-                    y = 2.5*delta_Axis.2,
+                aes(x = 3*delta_Axis.1,
+                    y = 3*delta_Axis.2,
                     label = variables))+
-      geom_path(aes(group = REGION), arrow = arrow(),)+
       theme_bw()+
       ylab(lab.y)+
-      xlab(lab.x)
+      xlab(lab.x)+
     ggtitle(loc[i])
-    archivo <- paste(directorio,loc[i], ".pdf", sep = "_")
+    archivo <- paste(directorio,"vectores",loc[i], ".pdf", sep = "_")
     ggsave(archivo, pco_plot[[i]], width = 24, height = 16, units = "cm")
     
+    }
   }
+  
+  if(vectores == FALSE){
+    
+    loc <- levels(factor(env$REGION))    
+    
+    ### Generación de PCO
+    
+    pco_plot <- list(NULL)
+    
+    for (i in 1:length(loc)){
+      
+      xx <- env %>% 
+        filter(REGION == loc[i]) %>% 
+        select(-c(ID, lat, lon)) %>% 
+        group_by(YEAR, REGION) %>% 
+        summarise(across(.fns = mean, na.rm = T))
+      
+      #Salvar archivo
+      write_excel_csv(
+        x = 
+          xx %>% 
+          mutate("-" = NA) %>% 
+          relocate(YEAR, .after = `-`) %>% 
+          relocate(REGION, .after = YEAR) ,
+        file = paste(directorio,"env_data",loc[i], ".csv", sep = "_"),
+        na = ""
+      )
+      
+      #Pretratamiento y centroides
+      xx2 <- scale(as.matrix(xx[,3:length(xx)]))
+      euc <- vegdist(xx2, method = "euclidean")
+      pco <- pcoa(euc)
+      #mds <- metaMDS(dis_cen)
+      points <- as.data.frame(pco$vectors[,1:2])
+      
+      lab.x <- str_c("PCO 1 (", round(pco$values$Relative_eig[1] * 100,0), " %)")
+      lab.y <- str_c("PCO 2 (", round(pco$values$Relative_eig[2] * 100,0), " %)")
+      
+      zz <- xx %>% 
+        # group_by(YEAR,REGION) %>% 
+        # summarise(n = n()) %>% 
+        bind_cols(points) 
+      
+      pco_plot[[i]] <- ggplot(zz, aes(x= Axis.1, y = Axis.2))+
+        geom_point(colour = "blue", size = 5)+
+        geom_text(aes(label = `YEAR`), nudge_y = 0.3)+
+        geom_path(aes(group = REGION), arrow = arrow(),)+
+        theme_bw()+
+        ylab(lab.y)+
+        xlab(lab.x)+
+        ggtitle(loc[i])
+      archivo <- paste(directorio,"trayectoria",loc[i], ".pdf", sep = "_")
+      ggsave(archivo, pco_plot[[i]], width = 24, height = 16, units = "cm")
+      
+    }
+  }
+  
 }
