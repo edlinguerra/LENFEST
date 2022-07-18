@@ -76,8 +76,8 @@ indicadores <- function(dat){
 
 mds <- function(bio, fac, factor.esp = c("LOCATION", "REGION", "REGION-YEAR"),
                 directorio = "MDS/nombre_carpetas/",
-                tipo = c("benthic", "fish_inv", "fish_bio"),
-                fuente = c("PRCRMP", "SEAMAP", "NCRMP")){
+                tipo = c("benthic", "fish_inv", "fish_bio", "landings"),
+                fuente = c("PRCRMP", "SEAMAP", "NCRMP", "UPR")){
   
   if(factor.esp == "LOCATION"){
     
@@ -349,8 +349,8 @@ ggsave(archivo, mds_plot[[i]], width = 24, height = 16, units = "cm")
 
 pco <- function(bio, fac, factor.esp = c("LOCATION", "REGION", "REGION-YEAR"),
                 directorio = "MDS/nombre_carpetas/",
-                tipo = c("benthic", "fish_inv", "fish_bio"),
-                fuente = c("PRCRMP", "SEAMAP", "NCRMP")){
+                tipo = c("benthic", "fish_inv", "fish_bio", "landings"),
+                fuente = c("PRCRMP", "SEAMAP", "NCRMP", "UPR")){
   
   if(factor.esp == "LOCATION"){
     
@@ -592,8 +592,8 @@ pco <- function(bio, fac, factor.esp = c("LOCATION", "REGION", "REGION-YEAR"),
 
 shadeplot <- function(bio, fac, factor.esp = c("LOCATION", "REGION", "REGIO-YEAR"),
                       directorio = "MDS/carpetas.../",
-                      tipo = c("benthic", "fish_inv", "fish_bio"),
-                      fuente = c("PRCRMP", "SEAMAP", "NCRMP"),
+                      tipo = c("benthic", "fish_inv", "fish_bio", "landings"),
+                      fuente = c("PRCRMP", "SEAMAP", "NCRMP", "UPR"),
                       leyenda = c("cobertura", "abundancia", "biomasa"),
                       important.spp){
   if(factor.esp == "LOCATION"){
@@ -830,7 +830,7 @@ shadeplot <- function(bio, fac, factor.esp = c("LOCATION", "REGION", "REGIO-YEAR
 
     ### Remover muestras vacías
     u_sp <- length(bio)
-
+    leyenda <- leyenda
     zero_sample <- bio %>%
       bind_cols(fac) %>%
       pivot_longer(cols = 1:u_sp, names_to = "species_name", values_to = "species_count") %>%
@@ -909,17 +909,23 @@ shadeplot <- function(bio, fac, factor.esp = c("LOCATION", "REGION", "REGIO-YEAR
       for (j in 1:nrow(xx2)){
         mac2[j,] <- 100*(xx2[j,]/total)  
       }
-      d <- vegdist(t(mac2[,]), method = "bray", na.rm = TRUE)
+      #d <- vegdist(t(mac2[,]), method = "bray", na.rm = TRUE)
+      #especies <- cluster.sp$labels[cluster.sp$order]
+      ## probando con ggside y ggdendro
+      
+      mac3 <- t(mac2[,])
+      d <- vegdist(mac3, method = "bray", na.rm = TRUE)
       cluster.sp <- hclust(d, method = "average")
       especies <- cluster.sp$labels[cluster.sp$order]
+      dendroy <- dendro_data(cluster.sp)
       
       shade_plot[[i]] <-  xx %>% 
         select(c(YEAR_REGION,YEAR,REGION, especies)) %>% 
         pivot_longer(cols = especies, 
                      names_to = "species_name",
                      values_to = "species_count") %>% 
-        ggplot(aes(x = YEAR,
-                   y = species_name,
+        ggplot(aes(x = as.factor(YEAR),
+                   y = factor(species_name, levels = especies),
                    fill = species_count))+
         geom_tile()+
         ylab("species")+
@@ -927,9 +933,13 @@ shadeplot <- function(bio, fac, factor.esp = c("LOCATION", "REGION", "REGIO-YEAR
         ggtitle(loc[i])+
         labs(fill = leyenda)+
         scale_y_discrete(labels = especies, expand = c(0, 0))+
-        scale_x_discrete(expand = c(0, 0))+
+        scale_x_discrete()+
         scale_fill_gradient(low = "white", high = "black")+
-        theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = .5))
+        theme_bw()+
+        theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = .5))+
+        geom_ysidesegment(data = dendroy$segments, aes(y = x, x = y, yend = xend, xend = yend),
+                          inherit.aes = FALSE)+
+        theme_ggside_void()
       
       archivo <- paste(directorio,fuente,tipo,loc[i], ".pdf", sep = "_")
       ggsave(filename =  archivo,
