@@ -123,7 +123,7 @@ t1 <- capturas %>%
     "PT",
     "BHD",
     "NETS",
-    "HL",
+    "TL",
     "CG"
   ))%>% #agrupar GEAR originales en cuatro grupos
   relocate(GEAR2, .after = 'GEAR/REGION') %>% 
@@ -154,7 +154,7 @@ capturas %<>%
   'POTS AND TRAPS, SPINY LOBSTER' = 'PT',    
   'SPEARS'                      =  'BHD',   
   'TRAMMEL NETS'                 = 'NETS',  
-  'TROLL LINES'                 = 'HL',  
+  'TROLL LINES'                 = 'TL',  
   'COMBINED GEARS'               = 'CG'))) %>% 
   relocate(GEAR2, .after = GEAR)
 
@@ -195,6 +195,40 @@ NETS <- PR2022_dat %>%
   bind_cols(PR2022_fac) %>% 
   filter(GEAR2 == "NETS")
 
+TL <- PR2022_dat %>% 
+  bind_cols(PR2022_fac) %>% 
+  filter(GEAR2 == "TL")
+
+PR2022_fac %<>% 
+  mutate('YEAR_REGION_GEAR' = str_c(REGION, YEAR, GEAR2, sep = "-"))
+
+PR2022_dat_std <- decostand(PR2022_dat, method = "total") *100
+
+mds(bio = sqrt(PR2022_dat_std),
+    fac = PR2022_fac,
+    factor.esp = "REGION-YEAR-GEAR",
+    directorio = "LANDINGS/MDS/temporal_region_gear/",
+    tipo = "MDS_std_sqrt_LANDINGS_PR2022",
+    fuente = "UPR")
+
+pco(bio = sqrt(PR2022_dat_std),
+    fac = PR2022_fac,
+    factor.esp = "REGION-YEAR-GEAR",
+    directorio = "LANDINGS/MDS/temporal_region_gear/pco/",
+    tipo = "PCO_std_sqrt_LANDINGS_PR2022",
+    fuente = "UPR")
+
+shadeplot(bio = sqrt(PR2022_dat_std),
+          fac = PR2022_fac,
+          factor.esp = "REGION-YEAR-GEAR",
+          directorio = "LANDINGS/MDS/temporal_region_gear/shadeplot/",
+          tipo = "shadeplot_std_sqrt_LANDINGS_PR2022",
+          fuente = "UPR",
+          leyenda = "Square root of Landings (%)",
+          important.spp = 30)
+
+
+
 # Análisis para HL --------------------------------------------------------
 HL_dat <- HL %>% 
   select(all_of(todas_spp))
@@ -202,27 +236,29 @@ HL_dat <- HL %>%
 HL_fac <- HL %>% 
   select(all_of((todos_factores)))
 
-mds(bio = sqrt(HL_dat),
+HL_dat_std <- decostand(HL_dat, method = "total") *100
+
+mds(bio = sqrt(HL_dat_std),
     fac = HL_fac,
     factor.esp = "REGION-YEAR",
     directorio = "LANDINGS/MDS/temporal_region/HL/",
-    tipo = "MDS_sqrt_LANDINGS_HL",
+    tipo = "MDS_std_sqrt_LANDINGS_HL",
     fuente = "UPR")
 
-pco(bio = sqrt(HL_dat),
+pco(bio = sqrt(HL_dat_std),
     fac = HL_fac,
     factor.esp = "REGION-YEAR",
     directorio = "LANDINGS/MDS/temporal_region/HL/pco/",
-    tipo = "PCO_sqrt_LANDINGS_HL",
+    tipo = "PCO_std_sqrt_LANDINGS_HL",
     fuente = "UPR")
 
-shadeplot(bio = sqrt(HL_dat),
+shadeplot(bio = sqrt(HL_dat_std),
           fac = HL_fac,
           factor.esp = "REGION-YEAR",
           directorio = "LANDINGS/MDS/temporal_region/HL/shadeplot/",
-          tipo = "shadeplot_sqrt_LANDINGS_HL",
+          tipo = "shadeplot_std_sqrt_LANDINGS_HL",
           fuente = "UPR",
-          leyenda = "Square root of Landings (Lb)",
+          leyenda = "Square root of Landings (%)",
           important.spp = 30)
 
 # Análisis para LL --------------------------------------------------------
@@ -232,27 +268,29 @@ LL_dat <- LL %>%
 LL_fac <- LL %>% 
   select(all_of((todos_factores)))
 
-mds(bio = sqrt(LL_dat),
+LL_dat_std <- decostand(LL_dat, method = "total") *100
+
+mds(bio = sqrt(LL_dat_std),
     fac = LL_fac,
     factor.esp = "REGION-YEAR",
     directorio = "LANDINGS/MDS/temporal_region/LL/",
-    tipo = "MDS_sqrt_LANDINGS_LL",
+    tipo = "MDS_std_sqrt_LANDINGS_LL",
     fuente = "UPR")
 
-pco(bio = sqrt(LL_dat),
+pco(bio = sqrt(LL_dat_std),
     fac = LL_fac,
     factor.esp = "REGION-YEAR",
     directorio = "LANDINGS/MDS/temporal_region/LL/pco/",
-    tipo = "PCO_sqrt_LANDINGS_LL",
+    tipo = "PCO_std_sqrt_LANDINGS_LL",
     fuente = "UPR")
 
-shadeplot(bio = sqrt(LL_dat),
+shadeplot(bio = sqrt(LL_dat_std),
           fac = LL_fac,
           factor.esp = "REGION-YEAR",
           directorio = "LANDINGS/MDS/temporal_region/LL/shadeplot/",
           tipo = "shadeplot_sqrt_LANDINGS_LL",
           fuente = "UPR",
-          leyenda = "Square root of Landings (Lb)",
+          leyenda = "Square root of Landings (%)",
           important.spp = 30)
 
 # Análisis para PT --------------------------------------------------------
@@ -262,27 +300,29 @@ PT_dat <- PT %>%
 PT_fac <- PT %>% 
   select(all_of((todos_factores)))
 
-mds(bio = sqrt(PT_dat),
+PT_dat_std <- decostand(PT_dat, method = "total") *100
+
+mds(bio = sqrt(PT_dat_std),
     fac = PT_fac,
     factor.esp = "REGION-YEAR",
     directorio = "LANDINGS/MDS/temporal_region/PT/",
-    tipo = "MDS_sqrt_LANDINGS_PT",
+    tipo = "MDS_std_sqrt_LANDINGS_PT",
     fuente = "UPR")
 
-pco(bio = sqrt(PT_dat),
+pco(bio = sqrt(PT_dat_std),
     fac = PT_fac,
     factor.esp = "REGION-YEAR",
     directorio = "LANDINGS/MDS/temporal_region/PT/pco/",
-    tipo = "PCO_sqrt_LANDINGS_PT",
+    tipo = "PCO_std_sqrt_LANDINGS_PT",
     fuente = "UPR")
 
-shadeplot(bio = sqrt(PT_dat),
+shadeplot(bio = sqrt(PT_dat_std),
           fac = PT_fac,
           factor.esp = "REGION-YEAR",
           directorio = "LANDINGS/MDS/temporal_region/PT/shadeplot/",
           tipo = "shadeplot_sqrt_LANDINGS_PT",
           fuente = "UPR",
-          leyenda = "Square root of Landings (Lb)",
+          leyenda = "Square root of Landings (%)",
           important.spp = 30)
 
 # Análisis para NETS --------------------------------------------------------
@@ -292,27 +332,29 @@ NETS_dat <- NETS %>%
 NETS_fac <- NETS %>% 
   select(all_of((todos_factores)))
 
-mds(bio = sqrt(NETS_dat),
+NETS_dat_std <- decostand(NETS_dat, method = "total") *100
+
+mds(bio = sqrt(NETS_dat_std),
     fac = NETS_fac,
     factor.esp = "REGION-YEAR",
     directorio = "LANDINGS/MDS/temporal_region/NETS/",
-    tipo = "MDS_sqrt_LANDINGS_NETS",
+    tipo = "MDS_std_sqrt_LANDINGS_NETS",
     fuente = "UPR")
 
-pco(bio = sqrt(NETS_dat),
+pco(bio = sqrt(NETS_dat_std),
     fac = NETS_fac,
     factor.esp = "REGION-YEAR",
     directorio = "LANDINGS/MDS/temporal_region/NETS/pco/",
-    tipo = "PCO_sqrt_LANDINGS_NETS",
+    tipo = "PCO_std_sqrt_LANDINGS_NETS",
     fuente = "UPR")
 
-shadeplot(bio = sqrt(NETS_dat),
+shadeplot(bio = sqrt(NETS_dat_std),
           fac = NETS_fac,
           factor.esp = "REGION-YEAR",
           directorio = "LANDINGS/MDS/temporal_region/NETS/shadeplot/",
           tipo = "shadeplot_sqrt_LANDINGS_NETS",
           fuente = "UPR",
-          leyenda = "Square root of Landings (Lb)",
+          leyenda = "Square root of Landings (%)",
           important.spp = 30)
 
 # Análisis para BHD --------------------------------------------------------
@@ -322,25 +364,59 @@ BHD_dat <- BHD %>%
 BHD_fac <- BHD %>% 
   select(all_of((todos_factores)))
 
-mds(bio = sqrt(BHD_dat),
+BHD_dat_std <- decostand(BHD_dat, method = "total")*100 
+
+mds(bio = sqrt(BHD_dat_std),
     fac = BHD_fac,
     factor.esp = "REGION-YEAR",
     directorio = "LANDINGS/MDS/temporal_region/BHD/",
-    tipo = "MDS_sqrt_LANDINGS_BHD",
+    tipo = "MDS_std_sqrt_LANDINGS_BHD",
     fuente = "UPR")
 
-pco(bio = sqrt(BHD_dat),
+pco(bio = sqrt(BHD_dat_std),
     fac = BHD_fac,
     factor.esp = "REGION-YEAR",
     directorio = "LANDINGS/MDS/temporal_region/BHD/pco/",
-    tipo = "PCO_sqrt_LANDINGS_BHD",
+    tipo = "PCO_std_sqrt_LANDINGS_BHD",
     fuente = "UPR")
 
-shadeplot(bio = sqrt(BHD_dat),
+shadeplot(bio = sqrt(BHD_dat_std),
           fac = BHD_fac,
           factor.esp = "REGION-YEAR",
           directorio = "LANDINGS/MDS/temporal_region/BHD/shadeplot/",
           tipo = "shadeplot_sqrt_LANDINGS_BHD",
           fuente = "UPR",
-          leyenda = "Square root of Landings (Lb)",
+          leyenda = "Square root of Landings (%)",
+          important.spp = 30)
+
+# Análisis para TL --------------------------------------------------------
+TL_dat <- TL %>% 
+  select(all_of(todas_spp))
+
+TL_fac <- TL %>% 
+  select(all_of((todos_factores)))
+
+TL_dat_std <- decostand(TL_dat, method = "total")*100 
+
+mds(bio = sqrt(TL_dat_std),
+    fac = TL_fac,
+    factor.esp = "REGION-YEAR",
+    directorio = "LANDINGS/MDS/temporal_region/TL/",
+    tipo = "MDS_std_sqrt_LANDINGS_TL",
+    fuente = "UPR")
+
+pco(bio = sqrt(TL_dat_std),
+    fac = TL_fac,
+    factor.esp = "REGION-YEAR",
+    directorio = "LANDINGS/MDS/temporal_region/TL/pco/",
+    tipo = "PCO_std_sqrt_LANDINGS_TL",
+    fuente = "UPR")
+
+shadeplot(bio = sqrt(TL_dat_std),
+          fac = TL_fac,
+          factor.esp = "REGION-YEAR",
+          directorio = "LANDINGS/MDS/temporal_region/TL/shadeplot/",
+          tipo = "shadeplot_sqrt_LANDINGS_TL",
+          fuente = "UPR",
+          leyenda = "Square root of Landings (%)",
           important.spp = 30)
