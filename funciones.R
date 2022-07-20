@@ -74,7 +74,7 @@ indicadores <- function(dat){
 }
 
 
-mds <- function(bio, fac, factor.esp = c("LOCATION", "REGION", "REGION-YEAR"),
+mds <- function(bio, fac, factor.esp = c("LOCATION", "REGION", "REGION-YEAR", "REGION-YEAR-GEAR"),
                 directorio = "MDS/nombre_carpetas/",
                 tipo = c("benthic", "fish_inv", "fish_bio", "landings"),
                 fuente = c("PRCRMP", "SEAMAP", "NCRMP", "UPR")){
@@ -127,9 +127,9 @@ mds <- function(bio, fac, factor.esp = c("LOCATION", "REGION", "REGION-YEAR"),
       write_excel_csv(
         x = 
           xx %>% 
-          mutate("-" = NA) %>% 
+          mutate(" " = NA) %>% 
           bind_cols(yy),
-      file = paste(directorio,fuente,tipo,loc[i], ".csv", sep = "_"),
+      file = paste(directorio,fuente,tipo,loc[i], ".xls", sep = "_"),
       na = ""
       )
 
@@ -216,9 +216,9 @@ ggsave(archivo, mds_plot[[i]], width = 24, height = 16, units = "cm")
       write_excel_csv(
         x = 
           xx %>% 
-          mutate("-" = NA) %>% 
+          mutate(" " = NA) %>% 
           bind_cols(yy),
-      file = paste(directorio,fuente,tipo,loc[i], ".csv", sep = "_"),
+      file = paste(directorio,fuente,tipo,loc[i], ".xls", sep = "_"),
       na = ""
       )
 
@@ -305,9 +305,9 @@ ggsave(archivo, mds_plot[[i]], width = 24, height = 16, units = "cm")
       write_excel_csv(
         x = 
           xx %>% 
-          mutate("-" = NA) %>% 
+          mutate(" " = NA) %>% 
           bind_cols(yy),
-      file = paste(directorio,fuente,tipo,loc[i], ".csv", sep = "_"),
+      file = paste(directorio,fuente,tipo,loc[i], ".xls", sep = "_"),
       na = ""
       )
 
@@ -345,9 +345,100 @@ ggsave(archivo, mds_plot[[i]], width = 24, height = 16, units = "cm")
 
     }
   }
+  if(factor.esp == "REGION-YEAR-GEAR"){
+    ### Remover muestras vacías
+    u_sp <- length(bio)
+    
+    zero_sample <- bio %>% 
+      bind_cols(fac) %>%  
+      pivot_longer(cols = 1:u_sp, names_to = "species_name", values_to = "species_count") %>% 
+      group_by(YEAR_REGION_GEAR) %>% 
+      summarise(N = sum(species_count)) %>% 
+      filter(N == 0) %>% 
+      select(YEAR_REGION_GEAR) %>% 
+      as.character()
+    
+    bio$YEAR_REGION_GEAR <- fac$YEAR_REGION_GEAR
+    
+    fac <- fac %>% 
+      mutate(REGION = str_replace(fac$REGION, pattern = "/", replacement = "-"),
+             YEAR_REGION = str_replace(fac$YEAR_REGION, pattern = "/", replacement = "-"),
+             YEAR_REGION_GEAR = str_replace(fac$YEAR_REGION_GEAR, pattern = "/", replacement = "-")
+      ) %>% 
+      filter(YEAR_REGION_GEAR != zero_sample)
+    
+    bio <- bio %>% 
+      filter(YEAR_REGION_GEAR != zero_sample) %>% 
+      select(-YEAR_REGION_GEAR)
+    
+    # ID para factor.esp
+    localities <- fac %>% 
+      group_by(YEAR, REGION, GEAR2) %>% 
+      summarise(muestras = n())
+    
+    loc <- localities %>% 
+      select(REGION) %>% 
+      ungroup(YEAR)
+    
+    loc <- levels(factor(loc$REGION))    
+    
+    ### Generación de MDS
+    
+    mds_plot <- list(NULL)
+    
+    for (i in 1:length(loc)){
+      # slección de datos por localidad
+      sel <- which(fac$REGION == loc[i])
+      xx <- bio[sel,] 
+      yy <- fac[sel,]
+      
+      #Salvar archivo
+      write_excel_csv(
+        x = 
+          xx %>% 
+          mutate(" " = NA) %>% 
+          bind_cols(yy),
+        file = paste(directorio,fuente,tipo,loc[i], ".xls", sep = "_"),
+        na = ""
+      )
+      
+      #Pretratamiento y centroides
+      xx$dummy <- rep(1, nrow(xx))
+      bray <- vegdist(xx)
+      disper <- betadisper(bray, group = yy$YEAR_REGION_GEAR)
+      centroides <- disper$centroids
+      dis_cen <- vegdist(centroides, method = "euclidean")
+      mds <- metaMDS(dis_cen)
+      points <- as.data.frame(mds$points)
+      stress <- str_c("2D stress = ", round(mds$stress, 3))
+      zz <- yy %>% 
+        group_by(YEAR,REGION, GEAR2) %>% 
+        summarise(n = n()) %>% 
+        bind_cols(points) 
+      mds_plot[[i]] <- ggplot(zz, aes(x= MDS1, y = MDS2))+
+        geom_point(aes(colour = GEAR2), size = 5)+
+        geom_text(aes(label = `YEAR`), nudge_y = 0.02)+
+        geom_path(aes(group = GEAR2), arrow = arrow(),)+
+        theme_bw()+
+        theme(axis.ticks = element_blank(),
+              axis.text = element_blank(),
+              panel.grid.major = element_blank(),
+              panel.grid.minor = element_blank())+
+        annotate(geom = "text", x = Inf,
+                 y = Inf, label = stress,
+                 hjust = 1, vjust = 1, 
+                 size = 3)+
+        ylab("")+
+        xlab("")+
+        ggtitle(loc[i])
+      archivo <- paste(directorio,fuente,tipo,loc[i], ".pdf", sep = "_")
+      ggsave(archivo, mds_plot[[i]], width = 24, height = 16, units = "cm")
+      
+    }
+  }
 }
 
-pco <- function(bio, fac, factor.esp = c("LOCATION", "REGION", "REGION-YEAR"),
+pco <- function(bio, fac, factor.esp = c("LOCATION", "REGION", "REGION-YEAR", "REGION-YEAR-GEAR"),
                 directorio = "MDS/nombre_carpetas/",
                 tipo = c("benthic", "fish_inv", "fish_bio", "landings"),
                 fuente = c("PRCRMP", "SEAMAP", "NCRMP", "UPR")){
@@ -588,9 +679,88 @@ pco <- function(bio, fac, factor.esp = c("LOCATION", "REGION", "REGION-YEAR"),
       
     }
   }
+  if(factor.esp == "REGION-YEAR-GEAR"){
+    ### Remover muestras vacías
+    u_sp <- length(bio)
+    
+    zero_sample <- bio %>% 
+      bind_cols(fac) %>%  
+      pivot_longer(cols = 1:u_sp, names_to = "species_name", values_to = "species_count") %>% 
+      group_by(YEAR_REGION_GEAR) %>% 
+      summarise(N = sum(species_count)) %>% 
+      filter(N == 0) %>% 
+      select(YEAR_REGION_GEAR) %>% 
+      as.character()
+    
+    bio$YEAR_REGION_GEAR <- fac$YEAR_REGION_GEAR
+    
+    fac <- fac %>% 
+      mutate(REGION = str_replace(fac$REGION, pattern = "/", replacement = "-"),
+             YEAR_REGION = str_replace(fac$YEAR_REGION, pattern = "/", replacement = "-"),
+             YEAR_REGION_GEAR = str_replace(fac$YEAR_REGION_GEAR, pattern = "/", replacement = "-")
+      ) %>% 
+      filter(YEAR_REGION_GEAR != zero_sample)
+    
+    bio <- bio %>% 
+      filter(YEAR_REGION_GEAR != zero_sample) %>% 
+      select(-YEAR_REGION_GEAR)
+    
+    # ID para factor.esp
+    localities <- fac %>% 
+      group_by(YEAR, REGION, GEAR2) %>% 
+      summarise(muestras = n())
+    
+    loc <- localities %>% 
+      select(REGION) %>% 
+      ungroup(YEAR)
+    
+    loc <- levels(factor(loc$REGION))  
+    
+    ### Generación de PCO
+    
+    pco_plot <- list(NULL)
+    
+    for (i in 1:length(loc)){
+      # slección de datos por localidad
+      sel <- which(fac$REGION == loc[i])
+      xx <- bio[sel,] 
+      yy <- fac[sel,]
+      
+      #Pretratamiento y centroides
+      xx$dummy <- rep(1, nrow(xx))
+      bray <- vegdist(xx)
+      disper <- betadisper(bray, group = yy$YEAR_REGION_GEAR)
+      centroides <- disper$centroids
+      dis_cen <- vegdist(centroides, method = "euclidean")
+      
+      pco <- pcoa(dis_cen)
+      #mds <- metaMDS(dis_cen)
+      points <- as.data.frame(pco$vectors[,1:2])
+      
+      lab.x <- str_c("PCO 1 (", round(pco$values$Relative_eig[1] * 100,0), " %)")
+      lab.y <- str_c("PCO 2 (", round(pco$values$Relative_eig[2] * 100,0), " %)")
+      
+      zz <- yy %>% 
+        group_by(YEAR,REGION,GEAR2) %>% 
+        summarise(n = n()) %>% 
+        bind_cols(points) 
+      
+      pco_plot[[i]] <- ggplot(zz, aes(x= Axis.1, y = Axis.2))+
+        geom_point(aes(colour = GEAR2), size = 5)+
+        geom_text(aes(label = `YEAR`), nudge_y = 0.05)+
+        geom_path(aes(group = GEAR2), arrow = arrow(),)+
+        theme_bw()+
+        ylab(lab.y)+
+        xlab(lab.x)+
+        ggtitle(loc[i])
+      archivo <- paste(directorio,fuente,tipo,loc[i], ".pdf", sep = "_")
+      ggsave(archivo, pco_plot[[i]], width = 24, height = 16, units = "cm")
+      
+    }
+  }
 }
 
-shadeplot <- function(bio, fac, factor.esp = c("LOCATION", "REGION", "REGIO-YEAR"),
+shadeplot <- function(bio, fac, factor.esp = c("LOCATION", "REGION", "REGIO-YEAR",  "REGIO-YEAR-GEAR"),
                       directorio = "MDS/carpetas.../",
                       tipo = c("benthic", "fish_inv", "fish_bio", "landings"),
                       fuente = c("PRCRMP", "SEAMAP", "NCRMP", "UPR"),
@@ -951,7 +1121,140 @@ shadeplot <- function(bio, fac, factor.esp = c("LOCATION", "REGION", "REGIO-YEAR
       
     }
     
+  }
+  if(factor.esp == "REGION-YEAR-GEAR"){
+    
+    ### Remover muestras vacías
+    u_sp <- length(bio)
+    
+    zero_sample <- bio %>% 
+      bind_cols(fac) %>%  
+      pivot_longer(cols = 1:u_sp, names_to = "species_name", values_to = "species_count") %>% 
+      group_by(YEAR_REGION_GEAR) %>% 
+      summarise(N = sum(species_count)) %>% 
+      filter(N == 0) %>% 
+      select(YEAR_REGION_GEAR) %>% 
+      as.character()
+    
+    bio$YEAR_REGION_GEAR <- fac$YEAR_REGION_GEAR
+    bio$YEAR_REGION <- fac$YEAR_REGION
+    bio$YEAR <- fac$YEAR
+    bio$REGION <- fac$REGION
+    bio$GEAR2 <- fac$GEAR2
+    
+    fac <- fac %>% 
+      mutate(REGION = str_replace(fac$REGION, pattern = "/", replacement = "-"),
+             YEAR_REGION = str_replace(fac$YEAR_REGION, pattern = "/", replacement = "-"),
+             YEAR_REGION_GEAR = str_replace(fac$YEAR_REGION_GEAR, pattern = "/", replacement = "-")
+      ) %>% 
+      filter(YEAR_REGION_GEAR != zero_sample)
+    
+    bio <- bio %>% 
+      filter(YEAR_REGION_GEAR != zero_sample)
+    
+    # ID para factor.esp
+    s <- as.numeric(important.spp)
+    
+    localities <- fac %>% 
+      group_by(YEAR, REGION, GEAR2) %>% 
+      summarise(muestras = n())
+    
+    loc <- localities %>% 
+      select(REGION) %>% 
+      ungroup(YEAR)
+    
+    loc <- levels(factor(loc$REGION))    
+    
+    
+    ### Generación de Shade Plot
+    
+    shade_plot <- list(NULL)
+    
+    for (i in 1:length(loc)){
+      xx <- bio %>% 
+        filter(REGION == loc[i])
+      
+      spp <- xx %>% 
+        pivot_longer(cols = 1:u_sp, 
+                     names_to = "species_name",
+                     values_to = "species_count") %>%
+        group_by(species_name) %>% 
+        filter(species_count != 0) %>% 
+        mutate(species_name = factor(species_name))
+      
+      spp <- levels(spp$species_name)
+      
+      xx <- xx %>% 
+        select(c(YEAR_REGION_GEAR,YEAR,REGION,GEAR2,spp)) %>% 
+        #mutate(across(where(is.numeric),.fns = sqrt), dummy = 1) %>% 
+        group_by(YEAR_REGION_GEAR,YEAR,REGION,GEAR2) %>%      
+        summarise(across(where(is.numeric),.fns = mean)) %>% 
+        ungroup()
+      
+      sel <- xx %>% 
+        pivot_longer(cols = 5:length(xx), names_to = "species_name", values_to = "species_count") %>% 
+        group_by(species_name) %>% 
+        summarise(N = sum(species_count)) %>% 
+        arrange(desc(N))
+      
+      sel <- as.character(sel$species_name[1:s])
+      sel <- sel[!is.na(sel)]
+      
+      xx2 <- xx %>% 
+        select(any_of(sel)) %>% 
+        as.matrix()
+      
+      #Whittaker's index of association
+      total <- apply(xx2, MARGIN = 2, FUN = sum, na.rm = TRUE)
+      mac2 <- xx2
+      for (j in 1:nrow(xx2)){
+        mac2[j,] <- 100*(xx2[j,]/total)  
+      }
+      #d <- vegdist(t(mac2[,]), method = "bray", na.rm = TRUE)
+      #especies <- cluster.sp$labels[cluster.sp$order]
+      ## probando con ggside y ggdendro
+      
+      mac3 <- t(mac2[,])
+      d <- vegdist(mac3, method = "bray", na.rm = TRUE)
+      cluster.sp <- hclust(d, method = "average")
+      especies <- cluster.sp$labels[cluster.sp$order]
+      dendroy <- dendro_data(cluster.sp)
+      
+      shade_plot[[i]] <-xx %>% 
+        filter(GEAR2!= "CG") %>% 
+        select(c(YEAR_REGION_GEAR,YEAR,REGION, GEAR2, especies)) %>% 
+        pivot_longer(cols = especies, 
+                     names_to = "species_name",
+                     values_to = "species_count") %>% 
+        ggplot(aes(x = as.factor(YEAR),
+                   y = factor(species_name, levels = especies),
+                   #group = GEAR2,
+                   fill = species_count))+
+        geom_tile()+
+        ylab("species")+
+        xlab("YEAR")+
+        ggtitle(loc[i])+
+        labs(fill = leyenda)+
+        scale_y_discrete(labels = especies, expand = c(0, 0))+
+        scale_x_discrete()+
+        scale_fill_gradient(low = "white", high = "black")+
+        theme_bw()+
+        theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = .5, size = 6),
+              axis.text.y = element_text(size = 6),
+              panel.grid = element_blank())+
+        facet_wrap(~GEAR2, nrow = 2, ncol = 3)
+      
+      archivo <- paste(directorio,fuente,tipo,loc[i], ".pdf", sep = "_")
+      ggsave(filename =  archivo,
+             plot = shade_plot[[i]],
+             device = "pdf",
+             width = 30,
+             height = 16, 
+             units = "cm")
+      
     }
+    
+  }
   }
 
 
@@ -981,10 +1284,10 @@ pco.env <- function(env,
     write_excel_csv(
       x = 
         xx %>% 
-        mutate("-" = NA) %>% 
+        mutate(" " = NA) %>% 
         relocate(YEAR, .after = `-`) %>% 
         relocate(REGION, .after = YEAR) ,
-      file = paste(directorio,"env_data",loc[i], ".csv", sep = "_"),
+      file = paste(directorio,"env_data",loc[i], ".xls", sep = "_"),
       na = ""
     )
     
@@ -1074,10 +1377,10 @@ pco.env <- function(env,
       write_excel_csv(
         x = 
           xx %>% 
-          mutate("-" = NA) %>% 
+          mutate(" " = NA) %>% 
           relocate(YEAR, .after = `-`) %>% 
           relocate(REGION, .after = YEAR) ,
-        file = paste(directorio,"env_data",loc[i], ".csv", sep = "_"),
+        file = paste(directorio,"env_data",loc[i], ".xls", sep = "_"),
         na = ""
       )
       
