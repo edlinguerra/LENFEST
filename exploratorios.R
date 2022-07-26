@@ -8,7 +8,6 @@ library(metR)
 
 
 # TEMPORAL CHANGES OF SITES BY LOCATIONS ----------------------------------
-
 # Benthic (1999-2019) ----------------------------------------------------
 d_bentos <- read_excel("datos_originales/PRCRMP Database Compilation (2-1-2021).xlsx",
                        sheet = "Benthic (1999-2019)")
@@ -174,21 +173,21 @@ shadeplot(bio = log(fish_biom+1),
 mds(bio = sqrt(bentos[,-c(1:6)]),
     fac = fac_bentos,
     factor.esp = "REGION-YEAR",
-    directorio = "MDS/temporal_region/benthic/",
+    directorio = "PRCRMP/temporal_region/benthic/",
     tipo = "sqrt_benthic",
     fuente = "PRCRMP")
 
 pco(bio = sqrt(bentos[,-c(1:6)]),
     fac = fac_bentos,
     factor.esp = "REGION-YEAR",
-    directorio = "MDS/temporal_region/benthic/pco/",
+    directorio = "PRCRMP/temporal_region/benthic/pco/",
     tipo = "sqrt_PCO_benthic",
     fuente = "PRCRMP")
 
 shadeplot(bio = sqrt(bentos[,-c(1:6)]),
           fac = fac_bentos,
           factor.esp = "REGION-YEAR",
-          directorio = "MDS/temporal_region/benthic/shadeplot/",
+          directorio = "PRCRMP/temporal_region/benthic/shadeplot/",
           tipo = "sqrt_shadeplot_benthic",
           important.spp = 50)
 
@@ -196,21 +195,21 @@ shadeplot(bio = sqrt(bentos[,-c(1:6)]),
 mds(bio = sqrt(f_i),
     fac = fac_f_i,
     factor.esp = "REGION-YEAR",
-    directorio = "MDS/temporal_region/fish_inv/",
+    directorio = "PRCRMP/temporal_region/fish_inv/",
     tipo = "sqrt_fish_inv",
     fuente = "PRCRMP")
 
 pco(bio = sqrt(f_i),
     fac = fac_f_i,
     factor.esp = "REGION-YEAR",
-    directorio = "MDS/temporal_region/fish_inv/pco/",
+    directorio = "PRCRMP/temporal_region/fish_inv/pco/",
     tipo = "sqrt_fish_inv",
     fuente = "PRCRMP")
 
 shadeplot(bio = sqrt(f_i),
           fac = fac_f_i,
           factor.esp = "REGION-YEAR",
-          directorio = "MDS/temporal_region/fish_inv/shadeplot/",
+          directorio = "PRCRMP/temporal_region/fish_inv/shadeplot/",
           tipo = "sqrt_fish_inv",
           leyenda = "Species abundance (sqrt)",
           important.spp = 50)
@@ -219,21 +218,21 @@ shadeplot(bio = sqrt(f_i),
 mds(bio = log(fish_biom+1),
     fac = fac_fish_biom,
     factor.esp = "REGION-YEAR",
-    directorio = "MDS/temporal_region/fish_biom/",
+    directorio = "PRCRMP/temporal_region/fish_biom/",
     tipo = "log_fish_biomass",
     fuente = "PRCRMP")
 
 pco(bio = log(fish_biom+1),
     fac = fac_fish_biom,
     factor.esp = "REGION-YEAR",
-    directorio = "MDS/temporal_region/fish_biom/pco/",
+    directorio = "PRCRMP/temporal_region/fish_biom/pco/",
     tipo = "log_fish_biomass_PCO",
     fuente = "PRCRMP")
 
 shadeplot(bio = log(fish_biom+1),
           fac = fac_fish_biom,
           factor.esp = "REGION-YEAR",
-          directorio = "MDS/temporal_region/fish_biom/shadeplot/",
+          directorio = "PRCRMP/temporal_region/fish_biom/shadeplot/",
           tipo = "log_fish_biomass",
           leyenda = "Fish biomass (log transformed)",
           important.spp = 50)
@@ -277,21 +276,21 @@ HL_fac <- HL %>%
 mds(bio = HL_dat,
     fac = HL_fac,
     factor.esp = "REGION-YEAR",
-    directorio = "MDS/temporal_region/HL/",
+    directorio = "SEAMAP/temporal_region/HL/",
     tipo = "sqrt_MDS_CPUE_HL",
     fuente = "SEAMAP")
 
 pco(bio = HL_dat,
     fac = HL_fac,
     factor.esp = "REGION-YEAR",
-    directorio = "MDS/temporal_region/HL/pco/",
+    directorio = "SEAMAP/temporal_region/HL/pco/",
     tipo = "sqrt_PCO_CPUE_HL",
     fuente = "SEAMAP")
 
 shadeplot(bio = HL_dat,
           fac = HL_fac,
           factor.esp = "REGION-YEAR",
-          directorio = "MDS/temporal_region/HL/shadeplot/",
+          directorio = "SEAMAP/temporal_region/HL/shadeplot/",
           tipo = "sqrt_shadeplot_CPUE_HL",
           fuente = "SEAMAP",
           leyenda = "CPUE average (sqrt)",
@@ -309,21 +308,21 @@ LL_fac <- LL %>%
 mds(bio = LL_dat,
     fac = LL_fac,
     factor.esp = "REGION-YEAR",
-    directorio = "MDS/temporal_region/LL/",
+    directorio = "SEAMAP/temporal_region/LL/",
     tipo = "sqrt_MDS_CPUE_LL",
     fuente = "SEAMAP")
 
 pco(bio = LL_dat,
     fac = LL_fac,
     factor.esp = "REGION-YEAR",
-    directorio = "MDS/temporal_region/LL/pco/",
+    directorio = "SEAMAP/temporal_region/LL/pco/",
     tipo = "sqrt_PCO_CPUE_LL",
     fuente = "SEAMAP")
 
 shadeplot(bio = LL_dat,
           fac = LL_fac,
           factor.esp = "REGION-YEAR",
-          directorio = "MDS/temporal_region/LL/shadeplot/",
+          directorio = "SEAMAP/temporal_region/LL/shadeplot/",
           tipo = "sqrt_shadeplot_CPUE_LL",
           fuente = "SEAMAP",
           leyenda = "CPUE average (sqrt)",
@@ -341,21 +340,21 @@ TRAP_fac <- TRAP %>%
 mds(bio = TRAP_dat,
     fac = TRAP_fac,
     factor.esp = "REGION-YEAR",
-    directorio = "MDS/temporal_region/TRAP/",
+    directorio = "SEAMAP/temporal_region/TRAP/",
     tipo = "sqrt_MDS_CPUE_TRAP",
     fuente = "SEAMAP")
 
 pco(bio = TRAP_dat,
     fac = TRAP_fac,
     factor.esp = "REGION-YEAR",
-    directorio = "MDS/temporal_region/TRAP/pco/",
+    directorio = "SEAMAP/temporal_region/TRAP/pco/",
     tipo = "sqrt_PCO_CPUE_TRAP",
     fuente = "SEAMAP")
 
 shadeplot(bio = TRAP_dat,
           fac = TRAP_fac,
           factor.esp = "REGION-YEAR",
-          directorio = "MDS/temporal_region/TRAP/shadeplot/",
+          directorio = "SEAMAP/temporal_region/TRAP/shadeplot/",
           tipo = "sqrt_shadeplot_CPUE_TRAP",
           fuente = "SEAMAP",
           leyenda = "CPUE average (sqrt)",
