@@ -302,7 +302,8 @@ ggsave(archivo, mds_plot[[i]], width = 24, height = 16, units = "cm")
     ### Generación de MDS
     
     mds_plot <- list(NULL)
-    
+    folder_data <- paste(directorio,"data/", sep = "")
+    folder_mds <- paste(directorio,"mds/", sep = "")
     for (i in 1:length(loc)){
       # slección de datos por localidad
       sel <- which(fac$REGION == loc[i])
@@ -310,14 +311,13 @@ ggsave(archivo, mds_plot[[i]], width = 24, height = 16, units = "cm")
       yy <- fac[sel,]
       
       #Salvar archivo
-      write_excel_csv(
+      write.xlsx(
         x = 
           xx %>% 
           mutate(" " = NA) %>% 
           bind_cols(yy),
-      file = paste(directorio,fuente,tipo,loc[i], ".xls", sep = "_"),
-      na = ""
-      )
+        file = paste(folder_data,fuente,tipo,loc[i], ".xlsx", sep = "_")
+        )
 
       #Pretratamiento y centroides
       xx$dummy <- rep(1, nrow(xx))
@@ -348,7 +348,7 @@ ggsave(archivo, mds_plot[[i]], width = 24, height = 16, units = "cm")
         ylab("")+
         xlab("")+
         ggtitle(loc[i])
-      archivo <- paste(directorio,fuente,tipo,loc[i], ".pdf", sep = "_")
+      archivo <- paste(folder_mds,fuente,tipo,loc[i], ".pdf", sep = "_")
       ggsave(archivo, mds_plot[[i]], width = 24, height = 16, units = "cm")
 
     }
@@ -389,6 +389,8 @@ ggsave(archivo, mds_plot[[i]], width = 24, height = 16, units = "cm")
       ungroup(YEAR)
     
     loc <- levels(factor(loc$REGION))    
+    folder_data <- paste(directorio,"data/", sep = "")
+    folder_mds <- paste(directorio,"mds/", sep = "")
     
     ### Generación de MDS
     
@@ -401,13 +403,12 @@ ggsave(archivo, mds_plot[[i]], width = 24, height = 16, units = "cm")
       yy <- fac[sel,]
       
       #Salvar archivo
-      write_excel_csv(
+      write.xlsx(
         x = 
           xx %>% 
           mutate(" " = NA) %>% 
           bind_cols(yy),
-        file = paste(directorio,fuente,tipo,loc[i], ".xls", sep = "_"),
-        na = ""
+        file = paste(folder_data,fuente,tipo,loc[i], ".xlsx", sep = "_")
       )
       
       #Pretratamiento y centroides
@@ -439,7 +440,7 @@ ggsave(archivo, mds_plot[[i]], width = 24, height = 16, units = "cm")
         ylab("")+
         xlab("")+
         ggtitle(loc[i])
-      archivo <- paste(directorio,fuente,tipo,loc[i], ".pdf", sep = "_")
+      archivo <- paste(folder_mds,fuente,tipo,loc[i], ".pdf", sep = "_")
       ggsave(archivo, mds_plot[[i]], width = 24, height = 16, units = "cm")
       
     }
