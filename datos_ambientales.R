@@ -180,19 +180,26 @@ anual_wave <- anual_wave %>%
 anual_env <- dhw_sst %>% 
   full_join(y = anual_k490 %>% select(-gridID)) %>% 
   full_join(y = anual_prod %>% select(-gridID)) %>% 
-  full_join(y = anual_rain %>% select(-gridID)) %>% 
+  full_join(y = anual_rain %>% select(-gridID))
+#%>% 
   #full_join(y = anual_wave %>% select(-gridID)) %>%
   #ungroup()%>% 
   #drop_na()
-  filter(YEAR >=2003) 
 
+# anual_env %>% 
+#   pivot_longer(cols = dhw_mean:rain_sd,
+#                names_to = 'variable',
+#                values_to = 'valor',
+#                values_drop_na = T) %>% 
+#   tabyl(YEAR, variable)
+  
+  
 rm(anual_dhw, anual_k490, anual_prod, anual_rain, anual_sst, anual_wave)
 rm(dhw_sst)
 rm(coord)
 
 anual_env <- anual_env %>%
   mutate(ID = as.character(ID))
-
 
 ggplot(anual_env, aes(x = lon, y = lat))+
     geom_point()+
@@ -209,7 +216,7 @@ anual_env_hurr <- hurr %>%
   pivot_longer(cols = 2:length(hurr), names_to = "ID", values_to = "hurr") %>% 
   mutate(YEAR = year(date)) %>% 
   relocate(YEAR, .after = date) %>%
-  filter(YEAR>=2003) %>% 
+  #filter(YEAR>=2003) %>% 
   group_by(YEAR, ID) %>% 
   summarise(hurr_sum = sum(hurr, na.rm = TRUE)) %>% 
   left_join(anual_env) 
@@ -234,10 +241,10 @@ rm(data_not_temporal)
 env.data <- anual_env_hurr %>% 
               left_join(nt_env) %>% 
               #Creación de zonas
-              mutate(REGION = if_else(lon < -67.15, "PR-West",
-                                      if_else(lon < -66 & lat >18.0, "PR-North",
-                                              if_else(lon < -66 & lat <18.0, "PR-South",
-                                                      if_else(lon < -65.05,  "PR-East",
+              mutate(REGION = if_else(lon < -67.16, "PR-West",
+                                      if_else(lon < -65.9 & lat >18.0, "PR-North",
+                                              if_else(lon < -65.9 & lat <18.0, "PR-South",
+                                                      if_else(lon < -65.08,  "PR-East",
                                                               if_else(lat > 18, "USVI-St. Thomas",
                                                                           "USVI-St. Croix")))))) %>% 
               relocate(REGION, .after = YEAR) %>% 
@@ -253,13 +260,13 @@ ggplot(env.data, aes(x = lon, y = lat))+
 pco.env(env = env.data, 
         r = 0.7,
         col = 0.85,
-        directorio = "PCO/vectores/",
+        directorio = "ENVIRONMENTAL/pco/vectores/",
         vectores = TRUE)
 
 pco.env(env = env.data, 
         r = 0.7,
         col = 0.85,
-        directorio = "PCO/trayectoria/",
+        directorio = "ENVIRONMENTAL/pco/trayectoria/",
         vectores = FALSE)
 
 # PCO anual todas las regiones
@@ -293,19 +300,16 @@ pco.env(env = env.data,
       xlab(lab.x)+
       ggtitle("PCO Year - Regions")
     
-    archivo <- paste("PCO/","env_data","all_regions", ".pdf", sep = "_")
-    ggsave(archivo, pco_plot, width = 24, height = 16, units = "cm")
+    ggsave("ENVIRONMENTAL/pco/pco_env_data_all_regions.pdf", pco_plot, width = 24, height = 16, units = "cm")
     
 
-    write_excel_csv(
+    write.xlsx(
       x = 
         xx %>% 
-        mutate("-" = NA) %>% 
-        relocate(YEAR, .after = `-`) %>% 
+        mutate(" " = NA) %>% 
+        relocate(YEAR, .after = ' ') %>% 
         relocate(REGION, .after = YEAR) ,
-      file = paste("PCO/","env_data","all_regions", ".csv", sep = "_"),
-      na = ""
-    )
+      file = "ENVIRONMENTAL/data/env_all_regions.xlsx")
 
 
 
