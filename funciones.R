@@ -1,7 +1,15 @@
 library(readxl)
-library(tidyverse)
 library(stringr)
-
+library(readr)
+library(dplyr)
+library(tidyr)
+library(lubridate)
+library(ggplot2)
+library(vegan)
+library(ape)
+library(metR)
+library(janitor)
+library(openxlsx)
 
 # Función para leer datos en formato PRIMER para trabajar con vegan
 
@@ -1259,7 +1267,7 @@ shadeplot <- function(bio, fac, factor.esp = c("LOCATION", "REGION", "REGIO-YEAR
 
 
 pco.env <- function(env,
-                    directorio = "PCO/pruebas/",
+                    directorio = "ENVIRONMENTAL/",
                     r = 0.5,
                     col = 0.85,
                     vectores = TRUE){
@@ -1281,13 +1289,13 @@ pco.env <- function(env,
       summarise(across(.fns = mean, na.rm = T))
     
     #Salvar archivo
-    write_excel_csv(
+    write.xlsx(
       x = 
         xx %>% 
         mutate(" " = NA) %>% 
-        relocate(YEAR, .after = `-`) %>% 
+        relocate(YEAR, .after = ' ') %>% 
         relocate(REGION, .after = YEAR) ,
-      file = paste(directorio,"env_data",loc[i], ".xls", sep = "_"),
+      file = paste("ENVIRONMENTAL/data/",loc[i], "env.xlsx", sep = "_"),
       na = ""
     )
     
@@ -1351,13 +1359,13 @@ pco.env <- function(env,
       ylab(lab.y)+
       xlab(lab.x)+
     ggtitle(loc[i])
-    archivo <- paste(directorio,"vectores",loc[i], ".pdf", sep = "_")
+    archivo <- paste(directorio,loc[i], "_env_pco_vectors.pdf", sep = "")
     ggsave(archivo, pco_plot[[i]], width = 24, height = 16, units = "cm")
     
     }
   }
   
-  if(vectores == FALSE){
+  else {
     
     loc <- levels(factor(env$REGION))    
     
@@ -1373,16 +1381,16 @@ pco.env <- function(env,
         group_by(YEAR, REGION) %>% 
         summarise(across(.fns = mean, na.rm = T))
       
-      #Salvar archivo
-      write_excel_csv(
-        x = 
-          xx %>% 
-          mutate(" " = NA) %>% 
-          relocate(YEAR, .after = `-`) %>% 
-          relocate(REGION, .after = YEAR) ,
-        file = paste(directorio,"env_data",loc[i], ".xls", sep = "_"),
-        na = ""
-      )
+      # #Salvar archivo
+      # write.xlsx(
+      #   x = 
+      #     xx %>% 
+      #     mutate(" " = NA) %>% 
+      #     relocate(YEAR, .after = ' ') %>% 
+      #     relocate(REGION, .after = YEAR) ,
+      #   file = paste("ENVIRONMENTAL/data/",loc[i], "env.xlsx", sep = "_"),
+      #   na = ""
+      # )
       
       #Pretratamiento y centroides
       xx2 <- scale(as.matrix(xx[,3:length(xx)]))
@@ -1407,7 +1415,7 @@ pco.env <- function(env,
         ylab(lab.y)+
         xlab(lab.x)+
         ggtitle(loc[i])
-      archivo <- paste(directorio,"trayectoria",loc[i], ".pdf", sep = "_")
+      archivo <- paste(directorio,loc[i], "_env_pco_trajectories.pdf", sep = "")
       ggsave(archivo, pco_plot[[i]], width = 24, height = 16, units = "cm")
       
     }
