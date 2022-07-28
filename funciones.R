@@ -82,8 +82,122 @@ indicadores <- function(dat){
 }
 
 
+dat_primer <- function(bio, fac, factor.esp = c("REGION-YEAR", "REGION-YEAR-GEAR"),
+                              directorio = NULL,
+                              tipo = c("benthic", "fish_inv", "fish_bio", "landings"),
+                              fuente = c("PRCRMP", "SEAMAP", "NCRMP", "UPR")){
+  
+  if(factor.esp == "REGION-YEAR"){
+    ### Remover muestras vacías
+    u_sp <- length(bio)
+    zero_sample <- bio %>% 
+      bind_cols(fac) %>%  
+      pivot_longer(cols = 1:u_sp, names_to = "species_name", values_to = "species_count") %>% 
+      group_by(YEAR_REGION) %>% 
+      summarise(N = sum(species_count)) %>% 
+      filter(N == 0) %>% 
+      select(YEAR_REGION) %>% 
+      as.character()
+    
+    bio$YEAR_REGION <- fac$YEAR_REGION
+    
+    fac <- fac %>% 
+      mutate(REGION = str_replace(fac$REGION, pattern = "/", replacement = "-"),
+             YEAR_REGION = str_replace(fac$YEAR_REGION, pattern = "/", replacement = "-")) %>% 
+      filter(YEAR_REGION != zero_sample)
+    
+    bio <- bio %>% 
+      filter(YEAR_REGION != zero_sample) %>% 
+      select(-YEAR_REGION)
+    
+    # ID para factor.esp
+    localities <- fac %>% 
+      group_by(YEAR, REGION) %>% 
+      summarise(muestras = n())
+    
+    loc <- localities %>% 
+      select(REGION) %>% 
+      ungroup(YEAR)
+    
+    loc <- levels(factor(loc$REGION))    
+    
+    ### Generación de MDS
+    
+    folder_data <- paste(directorio,"data/", sep = "")
+    for (i in 1:length(loc)){
+      # slección de datos por localidad
+      sel <- which(fac$REGION == loc[i])
+      xx <- bio[sel,] 
+      yy <- fac[sel,]
+      
+      #Salvar archivo
+      write.xlsx(
+        x = 
+          xx %>% 
+          mutate(" " = NA) %>% 
+          bind_cols(yy),
+        file = paste(folder_data,fuente,tipo,loc[i], ".xlsx", sep = "_")
+      )
+      }
+  }
+  if(factor.esp == "REGION-YEAR-GEAR"){
+    ### Remover muestras vacías
+    u_sp <- length(bio)
+    
+    zero_sample <- bio %>% 
+      bind_cols(fac) %>%  
+      pivot_longer(cols = 1:u_sp, names_to = "species_name", values_to = "species_count") %>% 
+      group_by(YEAR_REGION_GEAR) %>% 
+      summarise(N = sum(species_count)) %>% 
+      filter(N == 0) %>% 
+      select(YEAR_REGION_GEAR) %>% 
+      as.character()
+    
+    bio$YEAR_REGION_GEAR <- fac$YEAR_REGION_GEAR
+    
+    fac <- fac %>% 
+      mutate(REGION = str_replace(fac$REGION, pattern = "/", replacement = "-"),
+             YEAR_REGION = str_replace(fac$YEAR_REGION, pattern = "/", replacement = "-"),
+             YEAR_REGION_GEAR = str_replace(fac$YEAR_REGION_GEAR, pattern = "/", replacement = "-")
+      ) %>% 
+      filter(YEAR_REGION_GEAR != zero_sample)
+    
+    bio <- bio %>% 
+      filter(YEAR_REGION_GEAR != zero_sample) %>% 
+      select(-YEAR_REGION_GEAR)
+    
+    # ID para factor.esp
+    localities <- fac %>% 
+      group_by(YEAR, REGION, GEAR2) %>% 
+      summarise(muestras = n())
+    
+    loc <- localities %>% 
+      select(REGION) %>% 
+      ungroup(YEAR)
+    
+    loc <- levels(factor(loc$REGION))    
+    folder_data <- paste(directorio,"data/", sep = "")
+    
+    for (i in 1:length(loc)){
+      # slección de datos por localidad
+      sel <- which(fac$REGION == loc[i])
+      xx <- bio[sel,] 
+      yy <- fac[sel,]
+      
+      #Salvar archivo
+      write.xlsx(
+        x = 
+          xx %>% 
+          mutate(" " = NA) %>% 
+          bind_cols(yy),
+        file = paste(folder_data,fuente,tipo,loc[i], ".xlsx", sep = "_")
+      )
+    }
+  }
+}
+
 mds <- function(bio, fac, factor.esp = c("LOCATION", "REGION", "REGION-YEAR", "REGION-YEAR-GEAR"),
-                directorio = "MDS/nombre_carpetas/",
+                directorio = "nombre_carpetas/",
                 tipo = c("benthic", "fish_inv", "fish_bio", "landings"),
                 fuente = c("PRCRMP", "SEAMAP", "NCRMP", "UPR")){
   
@@ -448,7 +562,7 @@ ggsave(archivo, mds_plot[[i]], width = 24, height = 16, units = "cm")
 }
 
 pco <- function(bio, fac, factor.esp = c("LOCATION", "REGION", "REGION-YEAR", "REGION-YEAR-GEAR"),
-                directorio = "MDS/nombre_carpetas/",
+                directorio = "nombre_carpetas/",
                 tipo = c("benthic", "fish_inv", "fish_bio", "landings"),
                 fuente = c("PRCRMP", "SEAMAP", "NCRMP", "UPR")){
   
@@ -770,7 +884,7 @@ pco <- function(bio, fac, factor.esp = c("LOCATION", "REGION", "REGION-YEAR", "R
 }
 
 shadeplot <- function(bio, fac, factor.esp = c("LOCATION", "REGION", "REGIO-YEAR",  "REGIO-YEAR-GEAR"),
-                      directorio = "MDS/carpetas.../",
+                      directorio = "nombre_carpetas/",
                       tipo = c("benthic", "fish_inv", "fish_bio", "landings"),
                       fuente = c("PRCRMP", "SEAMAP", "NCRMP", "UPR"),
                       leyenda = c("cobertura", "abundancia", "biomasa"),
