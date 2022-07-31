@@ -12,6 +12,7 @@ library(ape)
 library(metR)
 library(latex2exp)
 library(magrittr)
+library(openxlsx)
 
 # Captura de datos --------------------------------------------------------
 # Procesamiento datos de captura
@@ -204,6 +205,12 @@ PR2022_fac %<>%
 
 PR2022_dat_std <- decostand(PR2022_dat, method = "total") *100
 
+dat_primer(PR2022_dat, PR2022_fac,
+           factor.esp = "REGION-YEAR-GEAR",
+           directorio = "LANDINGS/temporal_region_gear/",
+           tipo = "landings",
+           fuente = "UPR")
+
 mds(bio = sqrt(PR2022_dat_std),
     fac = PR2022_fac,
     factor.esp = "REGION-YEAR-GEAR",
@@ -235,6 +242,12 @@ HL_fac <- HL %>%
   select(all_of((todos_factores)))
 
 HL_dat_std <- decostand(HL_dat, method = "total") *100
+
+dat_primer(HL_dat, HL_fac,
+           factor.esp = "REGION-YEAR",
+           directorio = "LANDINGS/temporal_region/HL/",
+           tipo = "landings",
+           fuente = "UPR")
 
 mds(bio = sqrt(HL_dat_std),
     fac = HL_fac,
@@ -268,6 +281,12 @@ LL_fac <- LL %>%
 
 LL_dat_std <- decostand(LL_dat, method = "total") *100
 
+dat_primer(LL_dat, LL_fac,
+           factor.esp = "REGION-YEAR",
+           directorio = "LANDINGS/temporal_region/LL/",
+           tipo = "landings",
+           fuente = "UPR")
+
 mds(bio = sqrt(LL_dat_std),
     fac = LL_fac,
     factor.esp = "REGION-YEAR",
@@ -299,6 +318,12 @@ PT_fac <- PT %>%
   select(all_of((todos_factores)))
 
 PT_dat_std <- decostand(PT_dat, method = "total") *100
+
+dat_primer(PT_dat, PT_fac,
+           factor.esp = "REGION-YEAR",
+           directorio = "LANDINGS/temporal_region/PT/",
+           tipo = "landings",
+           fuente = "UPR")
 
 mds(bio = sqrt(PT_dat_std),
     fac = PT_fac,
@@ -332,6 +357,12 @@ NETS_fac <- NETS %>%
 
 NETS_dat_std <- decostand(NETS_dat, method = "total") *100
 
+dat_primer(NETS_dat, NETS_fac,
+           factor.esp = "REGION-YEAR",
+           directorio = "LANDINGS/temporal_region/NETS/",
+           tipo = "landings",
+           fuente = "UPR")
+
 mds(bio = sqrt(NETS_dat_std),
     fac = NETS_fac,
     factor.esp = "REGION-YEAR",
@@ -364,6 +395,12 @@ BHD_fac <- BHD %>%
 
 BHD_dat_std <- decostand(BHD_dat, method = "total")*100 
 
+dat_primer(BHD_dat, BHD_fac,
+           factor.esp = "REGION-YEAR",
+           directorio = "LANDINGS/temporal_region/BHD/",
+           tipo = "landings",
+           fuente = "UPR")
+
 mds(bio = sqrt(BHD_dat_std),
     fac = BHD_fac,
     factor.esp = "REGION-YEAR",
@@ -395,6 +432,12 @@ TL_fac <- TL %>%
   select(all_of((todos_factores)))
 
 TL_dat_std <- decostand(TL_dat, method = "total")*100 
+
+dat_primer(TL_dat, TL_fac,
+           factor.esp = "REGION-YEAR",
+           directorio = "LANDINGS/temporal_region/TL/",
+           tipo = "landings",
+           fuente = "UPR")
 
 mds(bio = sqrt(TL_dat_std),
     fac = TL_fac,
