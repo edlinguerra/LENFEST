@@ -5,6 +5,8 @@ library(magrittr)
 library(vegan)
 library(ape)
 library(metR)
+library(ggdendro)
+library(ggside)
 
 
 # TEMPORAL CHANGES OF SITES BY LOCATIONS ----------------------------------
@@ -170,6 +172,31 @@ shadeplot(bio = log(fish_biom+1),
 
 # TEMPORAL CHANGES OF REGIONS -----------------------------------------------------------------
 # Benthic -----------------------------------------------------------------
+
+levels(factor(fac_bentos$REGION))
+
+fac_bentos %<>% 
+  mutate(REGION = str_replace_all(REGION, c("Mona/Desecheo" = "West",
+                                            "Vieques/Culebra" = "East",
+                                            "Southeast" = "South",
+                                            "Southwest" ="South"
+                                            ))) %>%
+  mutate(REGION = ifelse(LOCATION == "Fajardo", "East",
+                         ifelse(LOCATION == "Vega Baja", "North",
+                               ifelse(LOCATION == "Carolina", "North",
+                                      ifelse(LOCATION == "San Juan", "North", REGION))))) %>%  
+  mutate(YEAR_REGION = str_c(YEAR_REGION = REGION, YEAR, sep = "-"))
+
+levels(factor(fac_bentos$REGION))
+levels(factor(fac_bentos$YEAR_REGION))
+
+dat_primer(bio = bentos,
+           fac = fac_bentos,
+           directorio = "PRCRMP/temporal_region/benthic/",
+           factor.esp = "REGION-YEAR",
+           tipo = "benthic",
+           fuente = "PRCRMP")
+
 mds(bio = sqrt(bentos[,-c(1:6)]),
     fac = fac_bentos,
     factor.esp = "REGION-YEAR",
@@ -192,6 +219,39 @@ shadeplot(bio = sqrt(bentos[,-c(1:6)]),
           important.spp = 50)
 
 # Fish-Invert -------------------------------------------------------------
+d_f_i <- read_excel("datos_originales/PRCRMP Database Compilation (2-1-2021).xlsx",
+                    sheet = "Fish-Invert Ab. (1999-2019)")
+
+
+## Extraer datos, factores e indicadores
+f_i <- datos(d_f_i)
+fac_f_i <- factores(d_f_i)
+
+levels(factor(fac_f_i$REGION))
+
+fac_f_i %<>% 
+  mutate(REGION = str_replace_all(REGION, c("Mona/Desecheo" = "West",
+                                            "Vieques/Culebra" = "East",
+                                            "Southeast" = "South",
+                                            "Southwest" ="South"
+  ))) %>%
+  mutate(REGION = ifelse(LOCATION == "Fajardo", "East",
+                         ifelse(LOCATION == "Vega Baja", "North",
+                                ifelse(LOCATION == "Carolina", "North",
+                                       ifelse(LOCATION == "San Juan", "North", REGION))))) %>%  
+  mutate(YEAR_REGION = str_c(YEAR_REGION = REGION, YEAR, sep = "-"))
+
+levels(factor(fac_f_i$REGION))
+levels(factor(fac_f_i$YEAR_REGION))
+
+dat_primer(bio = f_i,
+           fac = fac_f_i,
+           directorio = "PRCRMP/temporal_region/fish_inv/",
+           factor.esp = "REGION-YEAR",
+           tipo = "fish_inv",
+           fuente = "PRCRMP")
+
+
 mds(bio = sqrt(f_i),
     fac = fac_f_i,
     factor.esp = "REGION-YEAR",
@@ -215,6 +275,36 @@ shadeplot(bio = sqrt(f_i),
           important.spp = 50)
 
 # Fish Biomass (2004-2019) ------------------------------------------------
+d_fbio <- read_excel("datos_originales/PRCRMP Database Compilation (2-1-2021).xlsx",
+                     sheet = "Fish Biomass (2004-2019)")
+## Extraer datos, factores e indicadores
+fish_biom <- datos(d_fbio)
+fac_fish_biom <- factores(d_fbio)
+
+levels(factor(fac_fish_biom$REGION))
+
+fac_fish_biom %<>% 
+  mutate(REGION = str_replace_all(REGION, c("Mona/Desecheo" = "West",
+                                            "Vieques/Culebra" = "East",
+                                            "Southeast" = "South",
+                                            "Southwest" ="South"
+  ))) %>%
+  mutate(REGION = ifelse(LOCATION == "Fajardo", "East",
+                         ifelse(LOCATION == "Vega Baja", "North",
+                                ifelse(LOCATION == "Carolina", "North",
+                                       ifelse(LOCATION == "San Juan", "North", REGION))))) %>%  
+  mutate(YEAR_REGION = str_c(YEAR_REGION = REGION, YEAR, sep = "-"))
+
+levels(factor(fac_fish_biom$REGION))
+levels(factor(fac_fish_biom$YEAR_REGION))
+
+dat_primer(bio = fish_biom,
+           fac = fac_fish_biom,
+           directorio = "PRCRMP/temporal_region/fish_biom/",
+           factor.esp = "REGION-YEAR",
+           tipo = "log_fish_biomass",
+           fuente = "PRCRMP")
+
 mds(bio = log(fish_biom+1),
     fac = fac_fish_biom,
     factor.esp = "REGION-YEAR",
