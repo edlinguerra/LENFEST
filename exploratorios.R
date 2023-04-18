@@ -1,14 +1,3 @@
-library(readxl)
-library(tidyverse)
-library(stringr)
-library(magrittr)
-library(vegan)
-library(ape)
-library(metR)
-library(ggdendro)
-library(ggside)
-
-
 # TEMPORAL CHANGES OF SITES BY LOCATIONS ----------------------------------
 # Benthic (1999-2019) ----------------------------------------------------
 d_bentos <- read_excel("datos_originales/PRCRMP Database Compilation (2-1-2021).xlsx",

@@ -1,16 +1,3 @@
-library(readxl)
-library(stringr)
-library(readr)
-library(dplyr)
-library(tidyr)
-library(lubridate)
-library(ggplot2)
-library(vegan)
-library(ape)
-library(metR)
-library(janitor)
-library(openxlsx)
-
 # Función para leer datos en formato PRIMER para trabajar con vegan
 
 datos <- function(dat){

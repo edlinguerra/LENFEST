@@ -7,14 +7,16 @@ library(tidyr)
 library(dplyr)
 library(ggplot2)
 library(magrittr)
+library(openxlsx)
+library(readxl)
 
 #Listado de captura por REGION YEAR GEAR
-landings <- list.files(path = "LANDINGS/MDS/temporal_region/HL/",
+landings <- list.files(path = "LANDINGS/temporal_region_gear/data/",
                             recursive = TRUE,
-                            pattern = "\\.csv$",
+                            pattern = "\\.xlsx$",
                             full.names = TRUE)
 
-df_land <- readr::read_csv(landings, id = "file_name")
+df_land <- readxl::read_xlsx(landings)
 PR_landing_lvs <- levels(factor(df_land$YEAR_REGION))
 
 #datos ambientales
