@@ -1,4 +1,15 @@
-# TEMPORAL CHANGES OF REGIONS -----------------------------------------------------------------
+# PUERTO RICO - TEMPORAL CHANGES OF REGIONS -----------------------------------------------------------------
+library(readr)
+library(dplyr)
+library(tidyr)
+library(lubridate)
+library(stringr)
+library(ggplot2)
+library(vegan)
+library(ape)
+library(readxl)
+library(metR)
+
 # Benthic -----------------------------------------------------------------
 d_bentos <- read_excel("datos_originales/PRCRMP Database Compilation (2-1-2021).xlsx",
                        sheet = "Benthic (1999-2019)")
@@ -10,21 +21,62 @@ ind_bentos <- indicadores(d_bentos)
 
 levels(factor(fac_bentos$REGION))
 
-fac_bentos %<>% 
-  mutate(REGION = str_replace_all(REGION, c("Mona/Desecheo" = "West",
-                                            "Vieques/Culebra" = "East",
-                                            "Southeast" = "South",
-                                            "Southwest" ="South"
+fac_bentos <- fac_bentos |> 
+  mutate(REGION = str_replace_all(REGION, c("Mona/Desecheo" = "WEST",
+                                            "Vieques/Culebra" = "EAST",
+                                            "Southeast" = "SOUTH",
+                                            "Southwest" ="SOUTH"
   ))) %>%
-  mutate(REGION = ifelse(LOCATION == "Fajardo", "East",
-                         ifelse(LOCATION == "Vega Baja", "North",
-                                ifelse(LOCATION == "Carolina", "North",
-                                       ifelse(LOCATION == "San Juan", "North", REGION))))) %>%  
-  mutate(YEAR_REGION = str_c(YEAR_REGION = REGION, YEAR, sep = "-"))
-
+  mutate(REGION = ifelse(LOCATION == "Fajardo", "EAST",
+                         ifelse(LOCATION == "Vega Baja", "NORTH",
+                                ifelse(LOCATION == "Carolina", "NORTH",
+                                       ifelse(LOCATION == "San Juan", "NORTH", REGION))))) %>%
+  mutate(REGION = str_to_upper(REGION),
+         ISLAND = "PR")|>
+  mutate(label = str_c(YEAR,"-",ISLAND,"-",REGION),
+         YEAR_REGION = str_c(YEAR,"-",REGION),
+         YEAR_ISLAND = str_c(YEAR,"-",ISLAND),
+         " " = " ")|>
+  relocate(" ", .before = YEAR)
+  
 levels(factor(fac_bentos$REGION))
 levels(factor(fac_bentos$YEAR_REGION))
 
+##
+
+prcrmp <- bind_cols(fac_bentos, bentos) |>
+  select(-c(14:19))|>
+  pivot_longer(cols = 14:248, names_to = "species", values_to = "cover")|>
+  group_by(YEAR, REGION, ISLAND, species)|>
+  summarise(cover = mean(cover))|>
+  pivot_wider(names_from = species, values_from = cover)|>
+  mutate(label = str_c(YEAR,"-",ISLAND,"-",REGION),
+         " " = " ")|>
+  relocate(label, .before = YEAR)|>
+  relocate(" ", .before = YEAR)|>
+  relocate(c(" ", YEAR, REGION, ISLAND), .after = 'Xestospongia muta')
+
+write_csv(prcrmp, file = "final_prcrmp.csv")
+
+env <- bind_cols(fac_bentos, bentos) |>
+  select(c(1:19))|>
+  pivot_longer(cols = 14:19, names_to = "abiotic", values_to = "cover")|>
+  group_by(YEAR, REGION, ISLAND, sample_code)|>
+  summarise(cover = sum(cover))|>
+  ungroup()|>
+  group_by(YEAR, REGION, ISLAND)|>
+  summarise(abiotic_substrate = mean (cover))|>
+  mutate(label = str_c(YEAR,"-",ISLAND,"-",REGION),
+         " " = " ")|>
+  relocate(label, .before = YEAR)|>
+  relocate(" ", .before = YEAR)|>
+  relocate(abiotic_substrate, .after = label)
+
+write_csv(env, file = "abiotic_substrate.csv")
+
+
+
+### Funciones para generar datos formato PRIMER para análisis detallados (no usados para informe final)
 dat_primer(bio = bentos,
            fac = fac_bentos,
            directorio = "PRCRMP/temporal_region/benthic/",

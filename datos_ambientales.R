@@ -238,22 +238,64 @@ rm(data_not_temporal)
 
 # COMBINACIÓN DE DATOS ANUALES Y ESTÁTICOS --------------------------------
 
+# env.data <- anual_env_hurr %>% 
+#               left_join(nt_env) %>% 
+#               #Creación de FACTOR REGION
+#               mutate(REGION = if_else(lon < -67.16, "PR-West",
+#                                       if_else(lon < -65.9 & lat >18.0, "PR-North",
+#                                       if_else(lon < -65.9 & lat <18.0, "PR-South",
+#                                       if_else(lon < -65.08,  "PR-East",
+#                                       if_else(lon < -64.96 & lat >= 18.30, "STT-West",
+#                                       if_else(lon >= -64.96 & lat >18.34 & lon <= -64.86, "STT-North",
+#                                       if_else(lon >= -64.98 & lat <=18.33 & lon <= -64.86 & lat > 17.8, "STT-South",
+#                                       if_else(lon > -64.86 & lat > 18.20, "STT-East",
+#                                       if_else(lon <= -64.84 & lat < 17.84, "STC-West",
+#                                       if_else(lon > -64.84 & lat <17.8 & lat > 17.75 & lon < -64.65, "STC-North",
+#                                       if_else(lon >-64.84 & lat < 17.75 & lon < -64.65, "STC-South",
+#                                               "STC-East")))))))))))) %>%
+#               #Creación de factor ISLAND
+#               mutate(ISLAND = if_else(lon < -65.08, "Puerto Rico",
+#                                       if_else(lat < 18, "St. Croix", "St. Thomas"))) %>% 
+#               # relocate(REGION, .after = YEAR) %>% 
+#               relocate(ISLAND, .after = YEAR) %>% 
+#               drop_na()
+
 env.data <- anual_env_hurr %>% 
-              left_join(nt_env) %>% 
-              #Creación de zonas
-              mutate(REGION = if_else(lon < -67.16, "PR-West",
-                                      if_else(lon < -65.9 & lat >18.0, "PR-North",
-                                              if_else(lon < -65.9 & lat <18.0, "PR-South",
-                                                      if_else(lon < -65.08,  "PR-East",
-                                                              if_else(lat > 18, "USVI-St. Thomas",
-                                                                          "USVI-St. Croix")))))) %>% 
-              relocate(REGION, .after = YEAR) %>% 
-              drop_na()
+  left_join(nt_env) %>% 
+  #Creación de FACTOR REGION
+  mutate(FISHING_ZONE = if_else(lon < -67.16, "WEST",
+                          if_else(lon < -65.9 & lat >18.0, "NORTH",
+                                  if_else(lon < -65.9 & lat <18.0, "SOUTH",
+                                          if_else(lon < -65.08,  "EAST",
+                                                  if_else(lon < -64.96 & lat >= 18.30, "WEST",
+                                                          if_else(lon >= -64.96 & lat >18.34 & lon <= -64.86, "NORTH",
+                                                                  if_else(lon >= -64.98 & lat <=18.33 & lon <= -64.86 & lat > 17.8, "SOUTH",
+                                                                          if_else(lon > -64.86 & lat > 18.20, "EAST",
+                                                                                  if_else(lon <= -64.84 & lat < 17.84, "WEST",
+                                                                                          if_else(lon > -64.84 & lat <17.8 & lat > 17.75 & lon < -64.65, "NORTH",
+                                                                                                  if_else(lon >-64.84 & lat < 17.75 & lon < -64.65, "SOUTH",
+                                                                                                          "EAST")))))))))))) %>%
+  #Creación de factor ISLAND
+  mutate(ISLAND = if_else(lon < -65.08, "PR",
+                          if_else(lat < 18, "ST. CROIX", "ST. THOMAS"))) %>% 
+  # relocate(REGION, .after = YEAR) %>% 
+  relocate(ISLAND, .after = YEAR) %>% 
+  drop_na()
 
-
+#### Gráficos exploratorios 
 ggplot(env.data, aes(x = lon, y = lat))+
-  geom_point(aes(colour = REGION), size = 3)+
+  # geom_point(aes(colour = REGION), size = 1)+
+  geom_point(aes(colour = ISLAND), size = 1)+
   scale_x_continuous(breaks = seq(-68.00,-64.00, 0.2))+
+  theme_bw()
+
+env.data |>
+  #filter(ISLAND == "St. Croix")|>
+  ggplot(aes(x = lon, y = lat))+
+  # geom_point(aes(colour = REGION), size = 1)+
+  geom_point(aes(colour = FISHING_ZONE), size = 1)+
+  # scale_x_continuous(breaks = seq(-66.00,-64.00, 0.02))+
+  # scale_y_continuous(breaks = seq(17.60,18.00, 0.02))+
   theme_bw()
 
 ## PCO anual por cada region
@@ -302,14 +344,33 @@ pco.env(env = env.data,
     
     ggsave("ENVIRONMENTAL/pco/pco_env_data_all_regions.pdf", pco_plot, width = 24, height = 16, units = "cm")
     
+### fin de gráficos exploratorios
 
-    write.xlsx(
-      x = 
-        xx %>% 
-        mutate(" " = NA) %>% 
-        relocate(YEAR, .after = ' ') %>% 
-        relocate(REGION, .after = YEAR) ,
-      file = "ENVIRONMENTAL/data/env_all_regions.xlsx")
+### Base de datos ambiental en formato PRIMER
+
+statistics <- list(
+      mean = ~mean(.x, na.rm = TRUE),
+      sd = ~sd(.x, na.rm = TRUE),
+      min = ~min(.x, na.rm = TRUE), 
+      max = ~max(.x, na.rm = TRUE)
+    )    
+       
+temp1 <- env.data|>
+  select(-c(ID, lat, lon)) |>
+  relocate(c(YEAR,ISLAND), .after = FISHING_ZONE)|>
+  group_by(FISHING_ZONE, YEAR, ISLAND)|>
+  summarise(across(.cols =c(hurr_sum:'7_mpa'), .fns = statistics, .names = "{.fn}.{.col}"))|>
+  relocate(c(ISLAND,FISHING_ZONE, YEAR), .after = max.7_mpa)|>
+  mutate(" " = NA)|>
+  ungroup()|>
+  relocate(" ", .before = ISLAND)|>
+  mutate(label = str_c(YEAR,"-",ISLAND,"-",FISHING_ZONE))|>
+  relocate(label, .before = mean.hurr_sum)
 
 
-
+#
+    write_csv(
+      x = temp1,
+      na = " ",
+      file = "ENVIRONMENTAL/data/env_all_regions.csv",
+      )
